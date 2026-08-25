@@ -40,7 +40,7 @@ describe('buildQuery', () => {
 
   it('operator in แปลงค่าคั่นจุลภาคเป็นรายการในวงเล็บเหลี่ยม', () => {
     expect(buildQuery(condition('country', 'in', 'TH, SG, MY'))).toBe(
-      "country in ['TH', 'SG', 'MY']",
+      "country in ['TH','SG','MY']",
     )
   })
 

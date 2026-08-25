@@ -19,7 +19,8 @@ function formatValue(operator: string, raw: string): string {
       .filter(Boolean)
       .map(formatScalar)
 
-    return `[${items.join(', ')}]`
+    // ไม่เว้นวรรคหลังจุลภาคให้ตรงกับ editor ของจริง
+    return `[${items.join(',')}]`
   }
 
   return formatScalar(raw)

@@ -1,288 +1,137 @@
-# NOTES
+# Feature Flag Editor
 
-บันทึกการตัดสินใจเชิงเทคนิคของโจทย์ Feature Flag Editor
+หน้าเว็บสำหรับกำหนดค่า Feature Flag พร้อมดูผลลัพธ์ JSON แบบ real-time
+โจทย์: [README.md](src/pages/code-challenge/feature-flag-form/README.md)
 โค้ดทั้งหมดอยู่ที่ `src/pages/code-challenge/feature-flag-form/your-codes/`
 
 ## หมายเหตุเรื่องการใช้ AI
 
-พัฒนาโดยใช้ AI ช่วยในลักษณะ pair programming ทั้งการร่างโค้ดและอธิบายแนวคิด
-การตัดสินใจในเอกสารนี้เป็นการเลือกของผมเอง และตรวจสอบกับผลรันจริงทุกข้อ
+พัฒนาโปรเจกต์นี้โดยใช้ AI ช่วยในลักษณะ pair programming ทั้งการร่างโค้ดและอธิบายแนวคิด
+โดยเฉพาะ unit test และไฟล์นี้ ซึ่งเป็นงานที่ใช้เวลามาก
+
+การตัดสินใจเชิงออกแบบทุกข้อในหัวข้อด้านล่างเป็นการเลือกของผมเอง
+และได้ตรวจสอบกับผลรันจริงทุกส่วนก่อนส่ง
+
+## เทคโนโลยีที่ใช้
+
+|                 |                                           |
+| :-------------- | :---------------------------------------- |
+| React           | 19.2.5                                    |
+| TanStack Start  | 1.168.49                                  |
+| Form            | `@tanstack/react-form` 1.28.6             |
+| Validation      | `zod` 4.3.6                               |
+| JSON Preview    | `@monaco-editor/react` 4.7.0              |
+| Styling         | Tailwind CSS 4.2.2 + shadcn/ui + radix-ui |
+| Build / Test    | Vite 7.3.2 / Vitest 3.2.4                 |
+| Package Manager | pnpm 11.6.0                               |
+
+เพิ่มเข้ามาเอง 3 ตัว ดูเหตุผลในหัวข้อ [dependency ที่เพิ่มเข้ามา](#6-dependency-ที่เพิ่มเข้ามา)
+
+## วิธีติดตั้งและรัน
+
+```bash
+pnpm install
+pnpm dev
+```
+
+เปิด `http://localhost:3000/code-challenge/feature-flag-form`
+
+ต้องต่ออินเทอร์เน็ตเฉพาะตอน `pnpm install` เท่านั้น ตัว editor โหลดจาก `node_modules` ในเครื่อง
+
+## วิธีรันเทส
+
+```bash
+pnpm test
+```
+
+มีเทส 17 ข้อ ครอบคลุมการประกอบ query string (group ซ้อนหลายชั้น, group ที่มีลูกตัวเดียว,
+เงื่อนไขที่กรอกไม่ครบ, operator แต่ละแบบ) และการแปลงค่าฟอร์มเป็น JSON
+
+## โครงสร้างไฟล์
+
+```
+your-codes/
+├── index.tsx                 # ประกอบหน้า และเป็นเจ้าของ form
+├── hooks/                    # useForm ที่ผูก schema เข้ากับฟอร์ม
+├── schema/                   # zod schema และ type ทั้งหมด
+├── components/               # UI ล้วน ไม่มี business logic
+│   ├── targeting/            # targeting-section, rule-card, rule-group, condition-row
+│   ├── flag/                 # flag-metadata, variations, default-rule
+│   ├── preview/              # json-preview
+│   └── common/               # field-error
+└── lib/                      # logic ล้วน ไม่มี JSX
+    ├── targeting/            # build-query, operators, rule-tree (+ test)
+    ├── output/               # to-json-output (+ test)
+    ├── form/                 # create-id, form-errors
+    └── monaco/               # setup-monaco
+```
+
+แบ่งสองแกน แกนนอกคือ UI กับ logic แกนในคือเรื่องที่ไฟล์นั้นรับผิดชอบ
+`lib/` ไม่ import `components/` เลยสักไฟล์ จึงเขียน unit test ได้โดยไม่ต้อง render อะไร
+และ test วางไว้ข้างไฟล์ที่มันทดสอบ
 
 ---
 
-## 1. โครงสร้างข้อมูลของ targeting rule
+# การตัดสินใจในการออกแบบ
 
-เงื่อนไขหนึ่งชุดเป็นต้นไม้ที่มี node แค่ 2 ชนิด
+โจทย์ไม่ได้ระบุบางเรื่องไว้ ส่วนนี้สรุปเฉพาะสิ่งที่เลือกและเหตุผลโดยย่อ
+รายละเอียดดูได้จากโค้ดและ comment ในไฟล์ที่อ้างถึง
 
-```ts
-Condition = { id, type: 'condition', field, operator, value } // ใบ
-Group = { id, type: 'group', operator: 'and' | 'or', children } // กิ่ง ลูกเป็น node อะไรก็ได้
-```
+### 1. โครงสร้างข้อมูลของ targeting rule
 
-- ใช้ **discriminated union** ผ่าน field `type` เพื่อให้ TypeScript แยกสาขาได้เอง และฟังก์ชัน recursive เขียนง่าย
-- ทุก node มี **`id`** เพราะ React ต้องการ key ที่คงที่ ถ้าใช้ index เป็น key แล้วลบตัวกลางออก ค่าที่พิมพ์ไว้จะสลับกัน และจำเป็นถ้าจะต่อยอดเป็น drag and drop
-- `id` เป็น state ของฟอร์มเท่านั้น ไม่ถูกส่งออกไปใน JSON
+ไฟล์: `schema/feature-flag.schema.ts`
 
-## 2. ข้อจำกัดที่เจอจริง: recursive type ทำให้ TanStack Form infer ไม่ได้
+- **เลือก:** เก็บเงื่อนไขเป็นต้นไม้ที่มี node สองชนิด คือ `condition` (ใบ) กับ `group` (กิ่ง) แยกด้วย field `type` และทุก node มี `id`
+- **เหตุผล:** discriminated union ทำให้ฟังก์ชัน recursive เขียนง่ายและ TypeScript แยกสาขาให้เอง ส่วน `id` จำเป็นเพราะ React ต้องการ key ที่คงที่ ถ้าใช้ index แล้วลบตัวกลาง ค่าที่พิมพ์ไว้จะสลับกัน
+- **ผลที่ตามมา:** `id` เป็น state ของฟอร์มเท่านั้น ไม่ถูกส่งออกไปใน JSON
 
-พอใส่ type ที่วนซ้ำไม่จำกัดลงใน form data ทั้งฟอร์มพังทันที ทุก field กลายเป็น `any`
-พร้อม error `TS2589 Type instantiation is excessively deep and possibly infinite`
+### 2. ผูกทั้งต้นไม้เป็น field เดียว
 
-สาเหตุคือ TanStack Form ใช้ `DeepKeys<TFormData>` เดินทุก path ของข้อมูล เมื่อเจอ type ที่วนซ้ำไม่จำกัด TypeScript จึงเดินไม่จบ
+ไฟล์: `components/targeting/rule-card.tsx`, `lib/targeting/rule-tree.ts`, `lib/form/form-errors.ts`
 
-ทดลองแล้วว่าวิธีต่อไปนี้ **ไม่ช่วย**: เปลี่ยนเป็น `interface`, แยก component ออกไป, ถอด validator ออก
+- **เลือก:** ผูก `targeting[i].root` เป็น field เดียว แล้วให้ component ที่ recursive ส่งต้นไม้ชุดใหม่กลับมา แทนการทำทุก node เป็น field
+- **เหตุผล:** ถ้าแยกเป็น field ต่อ node ต้องประกอบ path เป็น string ตอนรัน แต่ component ที่เรียกตัวเองไม่รู้ว่าตัวเองอยู่ชั้นไหนตอน compile จึงต้อง cast เป็น `never` ทุกจุด เท่ากับปิด type checking ทิ้งทั้งต้นไม้
+- **แลกกับ:** พิมพ์ในเงื่อนไขหนึ่งข้อ ต้นไม้ของ rule ข้อนั้นจะ render ใหม่ทั้งก้อน แต่ rule ข้ออื่นและส่วนอื่นของฟอร์มไม่กระทบ
+- **ผลที่ตามมา:** error ของ node ที่อยู่ลึกไม่ถูกส่งมาที่ `field.state.meta` จึงส่ง path ลงไปกับ recursion เพื่อเปิดหาใน `errorMap` ของฟอร์มแทน โดย path นั้นเป็นแค่ key ของ object ไม่ต้องผ่าน type check
 
-วิธีที่ใช้คือ **แยก type เป็นสองชุด**
+> ข้อจำกัดที่เจอระหว่างทาง: ถ้าใส่ type ที่วนซ้ำไม่จำกัดลงใน form data ทั้งฟอร์มพังทันที
+> ได้ `TS2589` และทุก field กลายเป็น `any` เพราะ TanStack Form เดิน `DeepKeys` ทุก path
+> แก้ด้วยการจำกัดความลึกฝั่ง type และแยก type แบบวนซ้ำจริงไว้ใช้กับ logic และ test
+> ทดสอบแล้วว่าจำกัดกี่ชั้นก็ได้ ขอแค่มีจุดจบ ที่ 14 ชั้นก็ยังคอมไพล์ผ่าน
 
-| type                       | ใช้ที่ไหน             | ความลึก                           |
-| :------------------------- | :-------------------- | :-------------------------------- |
-| `RuleNode` / `Group`       | ใน form data          | จำกัด 4 ชั้น เฉพาะฝั่ง TypeScript |
-| `AnyRuleNode` / `AnyGroup` | `buildQuery` และ test | ไม่จำกัด                          |
+### 3. รูปแบบ query string
 
-ตอน runtime Zod ยังตรวจได้ลึกไม่จำกัด เพราะ schema ใช้ getter วนซ้ำจริง สิ่งที่จำกัดคือ type เท่านั้น
-ในทางปฏิบัติ 4 ชั้นเกินพอสำหรับเงื่อนไขของ feature flag
+ไฟล์: `lib/targeting/operators.ts`, `lib/targeting/build-query.ts`
 
-## 3. Zod schema ที่อ้างถึงตัวเอง
+- **เลือก:** ใช้สัญลักษณ์กับตัวเปรียบเทียบ (`==`, `!=`, `<` ...) ใช้คำย่อกับตัวที่ไม่มีสัญลักษณ์ (`co`, `sw`, `ew`, `in`, `pr`, `not`) และใช้ single quote ทั้งเส้น
+- **เหตุผล:** editor ของจริงใช้คำย่อและ double quote ทั้งหมด แต่ `expected.json` ในโจทย์ใช้ `group == 'beta'` จึงยึดตามโจทย์เพราะเป็น output ที่ถูกให้คะแนน
+- **ผลที่ตามมา:** สามตัวที่เดาผิดตอนแรกและต้องไปเปิด editor ของจริงถึงจะรู้ คือ `in` ใช้วงเล็บเหลี่ยม (`country in ['TH','EN']`), `not` เป็นตัวเปรียบเทียบที่ต้องมีค่า (`plan not 'free'`) และ `pr` ก็มีค่าตามหลัง (`ad pr "ad"`)
 
-ใช้ getter ตามที่ Zod v4 แนะนำ
+### 4. โครงสร้าง JSON ที่ส่งออก
 
-```ts
-get children() {
-  return z.array(ruleNodeSchema)
-}
-```
+ไฟล์: `lib/output/to-json-output.ts`
 
-ถ้าเขียน `children: z.array(ruleNodeSchema)` ตรง ๆ จะพัง เพราะตอนอ่านบรรทัดนั้น `ruleNodeSchema` ยังไม่ถูกสร้าง
-getter ทำให้ประเมินตอนถูกเรียกใช้แทน
+- **เลือก:** ยึดตาม `expected.json` คือครอบด้วย `flags` และไม่มี `name` ใน targeting
+- **เหตุผล:** JSON ที่ editor ของจริงสร้างไม่มี `flags` ครอบและมี `name` อยู่ด้วย แต่เกณฑ์ให้คะแนนระบุความถูกต้องของ output ไว้ตรง ๆ
+- **ผลที่ตามมา:** ช่อง Rule name ที่มีในหน้าจอตาม editor ของจริง จะไม่ปรากฏใน JSON ส่วน `disable` กับ `metadata.description` ใส่แบบมีเงื่อนไข เมื่อใช้งานตามปกติ output จึงตรงกับ `expected.json` ทุกตัวอักษร
 
-Zod v4 เป็น standard schema อยู่แล้ว จึงส่งเข้า `validators.onChange` ของ TanStack Form ได้ตรง ๆ ไม่ต้องมี adapter
-ส่วน validation ที่ต้องดูข้ามหลาย field เช่น ชื่อ variation ซ้ำ หรือ default rule อ้างถึง variation ที่ไม่มีอยู่ ทำใน `.check()` ระดับ object
+### 5. แก้ src/styles.css ซึ่งเป็นไฟล์ที่โจทย์ให้มา
 
-## 4. รูปแบบ operator ใน query string
+ไฟล์: `src/styles.css`
 
-GO Feature Flag ของจริงใช้คำย่อทั้งหมด (`eq`, `ne`, `lt`, `gt`, ...) ตรวจสอบจาก editor ของเขาแล้ว
-แต่ `expected.json` ในโจทย์ใช้ `group == 'beta'`
+- **เลือก:** ย้ายบล็อก `--color-*` และ `--radius-*` ไปเป็น `@theme inline` แล้วเติมชุดค่าสีของโหมดสว่างใน `:root`
+- **เหตุผล:** design token ของ shadcn ใช้ไม่ได้เลยทั้งแอปตั้งแต่ต้น `bg-card` และ `border-border` คำนวณออกมาเป็นโปร่งใส และ `rounded-xl` ได้ `0px` เพราะ Tailwind v4 สร้าง utility ให้เฉพาะ token ที่ประกาศใน `@theme` และค่าสีโหมดสว่างไม่มีนิยามอยู่ที่ไหนเลย
+- **ผลที่ตามมา:** ตรวจแล้วว่าใช้ได้ครบทั้ง light, dark และ auto ไม่ได้แตะ `theme-toggle.tsx` เพราะฝั่ง TypeScript เขียนไว้ถูกอยู่แล้ว
 
-เลือกยึดตามโจทย์ คือใช้สัญลักษณ์กับตัวเปรียบเทียบ (`==`, `!=`, `<`, `>`, `<=`, `>=`)
-และใช้คำย่อกับตัวที่ไม่มีสัญลักษณ์ (`co`, `sw`, `ew`, `in`, `pr`, `not`)
+### 6. dependency ที่เพิ่มเข้ามา
 
-สามตัวที่เดาผิด ต้องไปเปิด editor ของจริงถึงจะรู้รูปแบบ
+ไฟล์: `package.json`, `lib/monaco/setup-monaco.ts`, `components/targeting/targeting-section.tsx`
 
-- `in` รับค่าเป็นรายการในวงเล็บเหลี่ยม เช่น `country in ['TH', 'SG']` ไม่ใช่วงเล็บกลม
-- `not` เป็นตัวเปรียบเทียบที่ต้องมีค่าตามหลัง เช่น `plan not 'free'` ไม่ใช่ logical not ที่ครอบทั้ง expression
-- `pr` ก็มีค่าตามหลัง เช่น `ad pr "ad"` ไม่ได้ยืนเดี่ยวอย่างที่เข้าใจตอนแรก
+- **เลือก:** เพิ่ม `monaco-editor` และ `@dnd-kit/core` กับ `@dnd-kit/sortable`
+- **เหตุผล:** `@monaco-editor/react` เป็นตัวห่อ 188 KB ที่ประกาศ `monaco-editor` เป็น peer dependency ซึ่งโจทย์ไม่ได้ประกาศไว้ ตัว loader จึงดึง editor จาก CDN ตอนรัน ส่วน dnd-kit ใช้ทำโบนัสสลับลำดับ rule ให้รองรับทั้งเมาส์และคีย์บอร์ด
+- **ผลที่ตามมา:** ต้องบอก Vite ด้วยว่า worker ของ monaco อยู่ไหน และ `setup-monaco` ถูก import แบบ dynamic ใน effect เพราะใช้ `self` กับ `?worker` ซึ่งมีเฉพาะบนเบราว์เซอร์ ถ้าปล่อยให้ SSR แตะจะได้ `Element type is invalid` แล้วทั้งหน้าถอยไป client rendering
 
-ผลจาก `pr` คือตอนนี้ทุก operator ต้องมีค่าหมด แต่ยังเก็บกลไก `needsValue` ไว้
-เพราะมันคุมทั้งการซ่อนช่อง value ใน UI และการตัดค่าออกจาก query จากที่เดียว ถ้ามี operator ใหม่ที่ไม่ต้องมีค่า แก้ที่ตารางเดียวจบ
+## สิ่งที่ยังไม่ได้ทำ
 
-เรื่อง quote ของจริงใช้ double quote ทั้งหมด (`s in ["aeq"]`) แต่ `expected.json` ใช้ single quote (`group == 'beta'`)
-เลือก single quote ให้เหมือนกันทั้งเส้น เพราะ output ที่ถูกให้คะแนนคือ `expected.json`
-ถ้าผสมสองแบบใน query เดียวกันจะอ่านแล้วสะดุดกว่า
-
-ทั้งหมดรวมไว้ใน `lib/targeting/operators.ts` ที่เดียว ทั้ง label ที่แสดงใน dropdown ค่าใน query และข้อมูลว่า operator ตัวนั้นต้องมีช่อง value หรือไม่
-ถ้าต้องเปลี่ยนไปใช้คำย่อทั้งหมดแบบ GOFF แก้ที่ไฟล์นี้ไฟล์เดียว
-
-## 5. ชนิดของค่าใน condition
-
-ให้ผู้ใช้กรอกช่องเดียวแล้วเดาชนิดจากสิ่งที่พิมพ์
-
-- `18` เป็นตัวเลข ไม่ใส่ quote
-- `true` และ `false` เป็น boolean ไม่ใส่ quote
-- นอกนั้นเป็นข้อความ ใส่ quote ให้
-
-ข้อจำกัดคือถ้าอยากได้ข้อความ `'18'` จริง ๆ จะทำไม่ได้ ทางแก้คือเพิ่ม dropdown เลือกชนิด
-แต่เลือกไม่ทำเพื่อให้ UI เบาและเอาเวลาไปลงกับส่วน targeting ที่ซับซ้อนกว่า
-
-## 6. โครงสร้าง JSON ที่ส่งออก
-
-`expected.json` ในโจทย์กับ JSON ที่ editor ของจริงสร้าง **ไม่เหมือนกัน**
-
-|                     | GOFF ของจริง          | expected.json ของโจทย์ |
-| :------------------ | :-------------------- | :--------------------- |
-| ครอบด้วย `flags`    | ไม่มี                 | มี                     |
-| `name` ใน targeting | มี                    | ไม่มี                  |
-| `percentage`        | ไม่มีในตัวอย่างที่ลอง | มี                     |
-
-เลือกยึด `expected.json` เพราะเกณฑ์ให้คะแนนระบุเรื่องความถูกต้องของ output ไว้ตรง ๆ
-ส่วน UI ยังทำตาม editor ของจริงตามที่โจทย์บอก รวมถึงช่อง Rule name ที่มีในหน้าจอแต่ไม่ถูกส่งออกไปใน JSON
-
-### description และ enabled
-
-โจทย์กำหนดให้ฟอร์มมีคำอธิบายและสถานะ แต่ `expected.json` ไม่ได้บอกว่าสองอย่างนี้ไปอยู่ตรงไหน
-จึงใส่แบบมีเงื่อนไข อ้างอิงจาก GOFF ของจริงที่มีทั้งปุ่ม Disable และส่วน Metadata
-
-- `disable: true` โผล่เฉพาะตอนปิดใช้งาน
-- `metadata.description` โผล่เฉพาะตอนกรอกคำอธิบาย
-
-ผลคือเมื่อใช้งานตามปกติ output จะตรงกับ `expected.json` ทุกตัวอักษร แต่ช่องในฟอร์มก็ไม่ได้เป็นของตายที่ไม่มีผลอะไร
-
-## 7. การตีความคำว่า Group และ Role ในเกณฑ์
-
-เกณฑ์เขียนว่า "การจัดการสร้างกลุ่ม (Groups) และการกำหนดสิทธิ์ (Roles)"
-ตีความว่าอยู่ในบริบทของ targeting rule คือ Group หมายถึงกลุ่มเงื่อนไข and/or ที่ซ้อนกันได้
-ส่วน Role หมายถึง field ที่ใช้ target เช่น `role == 'admin'`
-
-เนื่องจากผู้ใช้พิมพ์ชื่อ field ได้เอง จึงรองรับทั้ง `role`, `group`, `country` หรืออะไรก็ได้โดยไม่ต้องทำระบบแยก
-
-## 8. การแยกไฟล์
-
-แบ่งสองแกน แกนแรกคือ UI กับ logic แกนที่สองคือเรื่องที่ไฟล์นั้นรับผิดชอบ
-
-```
-components/          UI ล้วน ไม่มี business logic
-  targeting/         targeting-section, rule-group, condition-row
-  flag/              flag-metadata-section, variations-section, default-rule-section
-  preview/           json-preview
-  common/            field-error
-
-lib/                 logic ล้วน ไม่มี JSX
-  targeting/         build-query, operators, rule-tree (+ test)
-  output/            to-json-output (+ test)
-  form/              create-id, form-errors
-  monaco/            setup-monaco
-
-schema/              zod schema และ type ทั้งหมด
-hooks/               useForm ที่ผูก schema เข้ากับฟอร์ม
-```
-
-`lib/` กับ `schema/` ไม่มี JSX เลย จึงเขียน unit test ได้โดยไม่ต้อง render อะไร
-และ test วางไว้ข้างไฟล์ที่มันทดสอบ ไม่ต้องเดาว่าไฟล์ไหนมี test แล้วบ้าง
-
-โฟลเดอร์ `targeting` โผล่ทั้งสองฝั่ง เพราะเป็นเรื่องที่ซับซ้อนที่สุดและมีทั้ง UI และ logic
-ถ้าจะเพิ่ม operator ใหม่หรือเปลี่ยนรูปแบบ query จะรู้ทันทีว่าต้องเข้าไปที่ `lib/targeting/`
-ส่วนถ้าจะเพิ่มฟีเจอร์ใหม่ทั้งก้อน ก็เพิ่มโฟลเดอร์ชื่อเดียวกันในทั้งสองฝั่งได้เลย
-
-`buildQuery` และ `toJsonOutput` มี test ครอบคลุมเคสที่พลาดง่าย เช่น group ซ้อนหลายชั้น group ที่มีลูกตัวเดียว
-และเงื่อนไขที่ผู้ใช้ยังกรอกไม่ครบ รันด้วย `pnpm test`
-
-## 9. แก้ src/styles.css ซึ่งเป็นไฟล์ที่โจทย์ให้มา
-
-design token ของ shadcn ใช้ไม่ได้เลยทั้งแอปตั้งแต่ต้น `bg-card` `bg-primary` `border-border` คำนวณออกมาเป็นโปร่งใส
-และ `rounded-xl` ได้ `0px` ทำให้การ์ดทุกใบมุมเหลี่ยม เส้นขอบเป็นสีดำ default ของเบราว์เซอร์
-
-สาเหตุมีสองชั้น
-
-- `--color-*` กับ `--radius-*` ถูกวางไว้ใน `:root` ธรรมดา แต่ Tailwind v4 สร้าง utility ให้เฉพาะ token ที่ประกาศใน `@theme` เท่านั้น class อย่าง `bg-card` จึงไม่ถูกสร้างตั้งแต่ตอน build
-- ค่าสีของโหมดสว่างไม่มีนิยามอยู่ที่ไหนเลย มีแต่ชุดโหมดมืดใน `:root[data-theme='dark']`
-
-แก้สองจุดตรงกับสาเหตุ คือย้ายบล็อก mapping ไปเป็น `@theme inline` และเติมชุดค่าโหมดสว่างใน `:root`
-ส่วน media query ของ `prefers-color-scheme` เดิมคัดลอก mapping มาซ้ำโดยไม่ได้ให้ค่าสีอะไร เปลี่ยนเป็นให้ค่าชุดโหมดมืดแทน
-
-ตัว `theme-toggle.tsx` เขียนไว้ถูกอยู่แล้ว คือใส่ `data-theme` เมื่อผู้ใช้เลือกเอง และถอดออกเมื่อเป็น auto เพื่อให้ media query ตัดสิน
-ปัญหาอยู่ที่ฝั่ง CSS ล้วน ๆ จึงไม่ได้แตะไฟล์ TypeScript เลย ตรวจแล้วว่าใช้ได้ครบทั้ง light, dark และ auto
-
-เลือกแก้แทนที่จะเลี่ยงไปใช้สีตรง ๆ เพราะเกณฑ์ให้คะแนนพูดถึงความสม่ำเสมอของ spacing และ border
-ถ้า `rounded-xl` กับ `bg-card` ที่เขียนไว้ไม่ทำงาน ความสม่ำเสมอที่ตั้งใจไว้ก็มองไม่เห็น
-
-## 10. pnpm-workspace.yaml
-
-pnpm 11 ไม่อ่าน field `pnpm.onlyBuiltDependencies` ใน `package.json` อีกแล้ว ย้ายไปอยู่ใน `pnpm-workspace.yaml` แทน
-ทำให้ build script ของ esbuild ถูกบล็อกและ `pnpm dev` รันไม่ได้
-จึงเพิ่มไฟล์นี้เข้ามาเพื่อให้ install และ dev ทำงานได้ทั้งบน pnpm 10 และ 11
-
-## 11. เพิ่ม monaco-editor เข้า package.json
-
-`@monaco-editor/react` เป็นตัวห่อขนาด 188 KB ไม่ได้มี monaco อยู่ในตัว ประกาศ `monaco-editor` ไว้เป็น peer dependency
-โจทย์ไม่ได้ประกาศแพ็กเกจนี้ไว้ ตัว loader จึงทำตามค่าเริ่มต้นคือดึง monaco จาก CDN ตอนรัน
-
-ตัว monaco อยู่ในเครื่องอยู่แล้วเพราะ pnpm ติดตั้ง peer ให้อัตโนมัติ แต่ถูกผูกไว้ใต้ `@monaco-editor/react` เท่านั้น
-`import 'monaco-editor'` จากโค้ดเราจึงได้ `MODULE_NOT_FOUND` เพราะ pnpm ไม่ให้เอื้อมถึงแพ็กเกจที่ไม่ได้ประกาศไว้
-
-เลือกประกาศ `monaco-editor` ลง `package.json` แล้วชี้ loader มาที่ตัวในเครื่องแทน CDN เหตุผลคือ
-editor เป็นส่วนที่โจทย์ให้คะแนน ไม่ควรพึ่งบริการภายนอกตอนเปิดหน้าครั้งแรก
-เวอร์ชันที่ใส่คือ `0.55.1` ซึ่งเป็นตัวที่ pnpm ติดตั้งมาให้อยู่แล้ว จึงไม่ได้ดึงของใหม่เข้ามา แค่ประกาศให้ตรงกับความจริง
-
-การใช้ตัวในเครื่องต้องบอก Vite ด้วยว่า worker อยู่ไหน เพราะ monaco แยก worker ตามภาษา
-ทั้งการตั้งค่า worker และ `loader.config` อยู่ใน `lib/setup-monaco.ts` ไฟล์เดียว และถูก import แบบ dynamic ใน effect
-เพื่อไม่ให้ติดไปกับ bundle ฝั่ง server เนื่องจากไฟล์นั้นเรียก `self` และ `?worker` ซึ่งมีเฉพาะบนเบราว์เซอร์
-
-ตรวจแล้วว่าหน้าเว็บไม่ยิงไปที่ CDN เลย ไฟล์ทั้งหมดมาจาก `node_modules` ในเครื่อง
-
-## 12. ขนาด bundle ของ monaco
-
-`pnpm build` แล้ววัดจริง `dist/client/assets` รวม 15 MB จาก 96 ไฟล์
-
-| ไฟล์                    |     ขนาด |
-| :---------------------- | -------: |
-| `ts.worker.js`          | 6,848 KB |
-| `setup-monaco.js`       | 3,688 KB |
-| `css.worker.js`         | 1,008 KB |
-| `html.worker.js`        |   680 KB |
-| `index.js` (แอปทั้งตัว) |   428 KB |
-
-monaco กินไปเกือบ 14 MB คิดเป็นราว 30 เท่าของโค้ดที่เขียนเอง
-และมี worker ของ TypeScript, CSS, HTML ติดมาด้วยทั้งที่ใช้แค่ JSON เพราะ `import * as monaco from 'monaco-editor'` ลากทุกภาษาที่ monaco รองรับเข้ามาหมด
-
-สิ่งที่ทำไปแล้วเพื่อลดผลกระทบคือ import `setup-monaco` แบบ dynamic ใน effect
-monaco จึงถูกแยกเป็น chunk ต่างหากและโหลดทีหลัง ไม่ได้อยู่ใน bundle หลัก ผู้ใช้เห็นฟอร์มก่อน แล้ว editor ค่อยตามมา
-
-ที่ยังไม่ได้ทำคือลดขนาดตัว monaco เอง ซึ่งน่าจะทำได้ด้วยการ import เฉพาะ core กับภาษา JSON
-
-```ts
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
-import 'monaco-editor/esm/vs/language/json/monaco.contribution'
-```
-
-เลือกไม่ทำในรอบนี้เพราะเป็น import path ภายในของ monaco ที่เปลี่ยนได้ตามเวอร์ชัน
-และเวลาที่เหลือควรลงกับ targeting rule ซึ่งเป็นส่วนที่มีคะแนนมากที่สุด ส่วนขนาด bundle ไม่ได้อยู่ในเกณฑ์ให้คะแนน
-
-## 13. monaco กับ SSR
-
-ใส่ `<Editor>` ลงในหน้าตรง ๆ แล้ว SSR พัง ได้ `Element type is invalid ... but got: object` แล้วทั้งหน้าถอยไป client rendering
-หน้ายังใช้งานได้ ถ้าไม่เปิด log ก็ไม่รู้ แต่เท่ากับเสียประโยชน์ของ SSR ทั้งหน้าเพราะ component ตัวเดียว
-
-แก้โดยแยกเป็น `components/json-preview.tsx` แล้วรอ mount ฝั่ง client ก่อนค่อยโหลด editor ฝั่ง server แสดงกล่อง placeholder แทน
-อีกทางที่แก้ได้คือใส่ `ssr.noExternal` ใน `vite.config.ts` แต่เลือกไม่ทำเพราะเป็นไฟล์ของโจทย์
-และวิธีที่ใช้ตรงกับความจริงมากกว่า คือ monaco render ฝั่ง server ไม่ได้อยู่แล้ว จึงไม่ควรพยายามให้มัน render
-
-## 14. วิธีผูก rule tree เข้ากับฟอร์ม
-
-ทางที่ตรงไปตรงมาคือทำทุก node เป็น field ของฟอร์ม เช่น `targeting[0].root.children[1].children[0].field`
-ทดลองแล้วพบว่า path ที่เขียนเป็น template literal ตรง ๆ ใช้ได้ TypeScript แปลงให้เป็น type ที่ตรงกับ `DeepKeys` พอดี
-แต่ใน component ที่เรียกตัวเอง path ต้องรับมาทาง prop ซึ่งประกาศได้แค่ `string` เพราะ component ไม่มีทางรู้ตอน compile ว่าตัวเองอยู่ชั้นไหน
-พอเป็น `string` ก็ไม่ตรงกับ path ตัวไหนเลย ทางออกเดียวคือ cast เป็น `never` ทุกจุด เท่ากับปิด type checking ทิ้งทั้งต้นไม้
-
-เลือกอีกทางแทน คือผูก**ทั้งต้นไม้ของ rule หนึ่งข้อเป็น field เดียว** (`targeting[0].root`)
-component ที่ recursive รับ node กับ callback `onChange` แล้วส่งต้นไม้ชุดใหม่กลับขึ้นไป
-การแก้ค่าใช้ฟังก์ชันบริสุทธิ์ใน `lib/rule-tree.ts` ทั้งหมด ไม่มี path เป็น string ให้พิมพ์ผิด และ type ตรวจได้ครบ
-
-แลกมาด้วยการที่พิมพ์ในเงื่อนไขหนึ่งข้อ แล้วต้นไม้ของ rule ข้อนั้นจะ render ใหม่ทั้งก้อน
-แต่ rule ข้ออื่นและส่วนอื่นของฟอร์มไม่กระทบ เพราะยังแยกด้วย `form.Field` ตามปกติ และต้นไม้หนึ่งข้อมีขนาดเล็ก
-
-### error ของ node ที่อยู่ลึก
-
-พอ node ไม่ได้เป็น field ของฟอร์ม error จาก zod จึงไม่ถูกส่งมาที่ `field.state.meta.errors`
-แต่ zod ใส่ path เต็มไว้ใน `errorMap` ของฟอร์มอยู่แล้ว เช่น `targeting[0].root.children[1].field`
-จึงส่ง path ลงไปกับ component ที่ recursive เพื่อใช้**เปิดหา error เท่านั้น** ไม่ได้ใช้ผูกค่า ตัวช่วยอยู่ใน `lib/form-errors.ts`
-path ตรงนี้เป็นแค่ key ของ object ไม่ต้องผ่าน type check จึงได้ error ตรงแถวทุกชั้นโดยไม่ต้อง cast อะไรเลย
-
-### ความลึกของกลุ่ม
-
-ทดลองแล้วว่า `form.Field` รองรับ `children` ซ้อนได้ถึง 3 ชั้น ชั้นที่ 4 ขึ้น TS2322
-ปุ่ม Group จึงถูกปิดเมื่อซ้อนครบ 3 ชั้นให้ตรงกัน เลือกปิดปุ่มแทนที่จะปล่อยให้กดแล้วค่อยไปพัง เพราะผู้ใช้ควรเห็นขอบเขตตั้งแต่ตอนกด
-
-## 15. Drag & Drop จัดลำดับ rule
-
-โจทย์บอกว่าถ้าลากสลับลำดับ rule ได้จะพิจารณาเป็นพิเศษ จึงทำเฉพาะระดับ rule ชั้นบนสุด
-ไม่ได้ทำกับ condition หรือ group ข้างใน เพราะนั่นคือการย้ายข้ามภาชนะในต้นไม้ ซึ่งโจทย์ไม่ได้ขอ
-
-### ทำไมถึงเพิ่ม dependency
-
-ตรรกะการสลับตำแหน่งมีอยู่แล้วใน TanStack Form คือ `moveValue(from, to)` ส่วนที่ขาดคือท่าทางการลาก
-เขียนเองด้วย HTML5 drag event ก็ทำได้ แต่จะไม่รองรับมือถือ ไม่รองรับคีย์บอร์ด และไม่มี animation ตอนสลับตำแหน่ง
-
-เลือก `@dnd-kit/core` กับ `@dnd-kit/sortable` แค่สองตัว ไม่เอา `utilities` กับ `modifiers` ที่มักลงคู่กัน
-เพราะสองอย่างที่ต้องการเขียนเองได้บรรทัดเดียว คือแปลง transform เป็น CSS และล็อกแกนโดยใช้แค่ `transform.y`
-lockfile เพิ่มมา 53 บรรทัด ไม่มีการลบอะไรออก
-
-### สองจุดที่ต้องระวัง
-
-การ์ด rule สูงมากเพราะมีต้นไม้เงื่อนไขอยู่ข้างใน จึงให้ลากได้เฉพาะที่หูจับ
-ถ้าผูก listener ไว้ทั้งการ์ด การลากเลือกข้อความในช่องกรอกจะกลายเป็นการลากการ์ดแทน
-
-ตั้ง `PointerSensor` ให้ต้องลากเกิน 8px ก่อนถึงนับเป็นการลาก คลิกธรรมดาจึงยังทำงานตามปกติ
-และใส่ `KeyboardSensor` ไว้ด้วย คนที่ใช้เมาส์ไม่ได้จึงยังจัดลำดับได้ เป็นของแถมที่ dnd-kit ให้มาโดยไม่ต้องเขียนเพิ่ม
-
-## ยังไม่ได้ยืนยัน
-
-- ค่าใน `in` ให้กรอกคั่นด้วยจุลภาคช่องเดียว ยังไม่ได้ทำเป็น UI แบบเพิ่มทีละรายการ
+- **ชนิดของค่าใน condition** เดาจากสิ่งที่พิมพ์ `18` เป็นตัวเลข `true` เป็น boolean นอกนั้นเป็นข้อความ ทำให้ระบุข้อความ `'18'` ไม่ได้ ถ้าต้องการควรเพิ่ม dropdown เลือกชนิด
+- **ขนาด bundle ของ monaco** `dist/client/assets` รวม 15 MB โดยเกือบ 14 MB เป็น monaco ซึ่งลากทุกภาษาเข้ามาทั้งที่ใช้แค่ JSON ลดได้ด้วยการ import เฉพาะ core กับภาษา JSON แต่เป็น import path ภายในที่เปลี่ยนตามเวอร์ชันได้ ปัจจุบันแยกเป็น chunk ต่างหากและโหลดทีหลังอยู่แล้ว จึงไม่บล็อกการแสดงผลครั้งแรก
