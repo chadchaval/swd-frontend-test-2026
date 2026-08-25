@@ -18,7 +18,7 @@ type GroupOf<TChild> = {
   children: Array<TChild>
 }
 
-// ✅ TanStack Form เดิน DeepKeys ทุก field ถ้า type วนซ้ำไม่จำกัด จะได้ TS2589 และทั้งฟอร์มกลายเป็น any
+// TanStack Form เดิน DeepKeys ทุก field ถ้า type วนซ้ำไม่จำกัด จะได้ TS2589 และทั้งฟอร์มกลายเป็น any
 // ขอแค่มีจุดจบ จะลึกเท่าไหร่ก็ได้ ทดสอบถึง 14 ชั้นก็ยังผ่าน จำนวนชั้นตรงนี้ตั้งให้ตรงกับ MAX_GROUP_DEPTH ใน rule-group
 type NodeDepth7 = Condition
 type NodeDepth6 = Condition | GroupOf<NodeDepth7>
@@ -27,7 +27,7 @@ type NodeDepth4 = Condition | GroupOf<NodeDepth5>
 type NodeDepth3 = Condition | GroupOf<NodeDepth4>
 type NodeDepth2 = Condition | GroupOf<NodeDepth3>
 
-// ✅ type แบบวนซ้ำจริงไว้ใช้กับ logic และ test เท่านั้น ห้ามเอาไปใส่ใน form data ไม่งั้น TanStack Form จะ infer ไม่ได้
+// type แบบวนซ้ำจริงไว้ใช้กับ logic และ test เท่านั้น ห้ามเอาไปใส่ใน form data ไม่งั้น TanStack Form จะ infer ไม่ได้
 export type AnyGroup = {
   id: string
   type: 'group'

@@ -25,7 +25,7 @@ function YourCode() {
             form.handleSubmit()
           }}
         >
-          {/*กระจาย form เข้าทุก Section */}
+          {/* กระจาย form เข้าทุก Section */}
           <FlagMetadataSection form={form} />
           <VariationsSection form={form} />
           <TargetingSection form={form} />
