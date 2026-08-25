@@ -10,7 +10,7 @@ export const OPERATORS = [
   { label: 'Starts With', value: 'sw', needsValue: true },
   { label: 'Ends With', value: 'ew', needsValue: true },
   { label: 'In a List', value: 'in', needsValue: true }, // ค่าคั่นด้วยจุลภาค แล้วไปประกอบเป็น [..] ใน build-query
-  { label: 'Present', value: 'pr', needsValue: false },
+  { label: 'Present', value: 'pr', needsValue: true },
   { label: 'Not', value: 'not', needsValue: true },
 ] as const
 
@@ -21,6 +21,8 @@ export const OPERATOR_VALUES = OPERATORS.map((o) => o.value) as [
   ...Array<OperatorValue>,
 ]
 
+// needsValue ตอนนี้เป็น true ทั้งหมด เพราะ editor ของจริงใส่ค่าตามหลังทุก operator แม้แต่ pr
+// คงกลไกนี้ไว้เผื่อ operator ใหม่ที่ไม่ต้องมีค่า จะได้ทั้งซ่อนช่องใน UI และตัดค่าออกจาก query ด้วย
 export function operatorNeedsValue(operator: OperatorValue): boolean {
   return OPERATORS.find((o) => o.value === operator)?.needsValue ?? true
 }

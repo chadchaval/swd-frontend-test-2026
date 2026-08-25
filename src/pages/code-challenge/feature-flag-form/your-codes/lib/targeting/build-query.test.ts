@@ -33,8 +33,9 @@ describe('buildQuery', () => {
     )
   })
 
-  it('operator ที่ไม่ต้องมีค่า จะไม่มีส่วน value', () => {
-    expect(buildQuery(condition('email', 'pr'))).toBe('email pr')
+  it('pr ต้องมีค่าตามหลัง เหมือน operator อื่น ตาม editor ของจริง', () => {
+    expect(buildQuery(condition('email', 'pr', 'true'))).toBe('email pr true')
+    expect(buildQuery(condition('email', 'pr', ''))).toBe('')
   })
 
   it('operator in แปลงค่าคั่นจุลภาคเป็นรายการในวงเล็บเหลี่ยม', () => {
