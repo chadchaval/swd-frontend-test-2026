@@ -1,11 +1,11 @@
 import { Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
-import { FieldError } from './field-error'
-import { issuesAt } from '../lib/form-errors'
-import { OPERATORS, operatorNeedsValue } from '../lib/operators'
-import type { OperatorValue } from '../lib/operators'
-import type { Condition } from '../schema/feature-flag.schema'
+import { FieldError } from '../common/field-error'
+import { issuesAt } from '../../lib/form/form-errors'
+import { OPERATORS, operatorNeedsValue } from '../../lib/targeting/operators'
+import type { OperatorValue } from '../../lib/targeting/operators'
+import type { Condition } from '../../schema/feature-flag.schema'
 
 const SELECT_CLASS =
   'border-border bg-background h-9 rounded-md border px-2 text-sm'

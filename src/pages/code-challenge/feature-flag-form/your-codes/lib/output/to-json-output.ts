@@ -1,8 +1,8 @@
-import { buildQuery } from './build-query'
+import { buildQuery } from '../targeting/build-query'
 import type {
   FeatureFlagFormValues,
   Variation,
-} from '../schema/feature-flag.schema'
+} from '../../schema/feature-flag.schema'
 
 type FlagValue = string | number | boolean
 

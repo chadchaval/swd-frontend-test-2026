@@ -1,11 +1,11 @@
-import { createId } from './create-id'
+import { createId } from '../form/create-id'
 import type {
   AnyGroup,
   AnyRuleNode,
   Condition,
   Group,
   TargetingRule,
-} from '../schema/feature-flag.schema'
+} from '../../schema/feature-flag.schema'
 
 export function createCondition(): Condition {
   return {

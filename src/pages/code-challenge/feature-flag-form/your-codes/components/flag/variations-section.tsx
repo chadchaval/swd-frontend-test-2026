@@ -1,9 +1,9 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
-import { createId } from '../lib/create-id'
-import { FieldError } from './field-error'
-import type { FeatureFlagForm } from '../hooks/use-feature-flag-form'
+import { createId } from '../../lib/form/create-id'
+import { FieldError } from '../common/field-error'
+import type { FeatureFlagForm } from '../../hooks/use-feature-flag-form'
 
 export function VariationsSection({ form }: { form: FeatureFlagForm }) {
   return (

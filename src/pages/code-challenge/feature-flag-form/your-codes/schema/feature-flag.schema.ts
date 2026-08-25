@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { OPERATOR_VALUES } from '../lib/operators'
+import { OPERATOR_VALUES } from '../lib/targeting/operators'
 
 export const conditionSchema = z.object({
   id: z.string(),

@@ -1,12 +1,12 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
-import { FieldError } from './field-error'
+import { FieldError } from '../common/field-error'
 import { RuleGroup } from './rule-group'
-import { buildQuery } from '../lib/build-query'
-import { createTargetingRule } from '../lib/rule-tree'
-import type { FeatureFlagForm } from '../hooks/use-feature-flag-form'
-import type { AnyGroup, Group } from '../schema/feature-flag.schema'
+import { buildQuery } from '../../lib/targeting/build-query'
+import { createTargetingRule } from '../../lib/targeting/rule-tree'
+import type { FeatureFlagForm } from '../../hooks/use-feature-flag-form'
+import type { AnyGroup, Group } from '../../schema/feature-flag.schema'
 
 export function TargetingSection({ form }: { form: FeatureFlagForm }) {
   return (

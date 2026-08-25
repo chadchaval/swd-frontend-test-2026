@@ -4,7 +4,7 @@ import type {
   AnyGroup,
   AnyRuleNode,
   Condition,
-} from '../schema/feature-flag.schema'
+} from '../../schema/feature-flag.schema'
 
 function condition(
   field: string,

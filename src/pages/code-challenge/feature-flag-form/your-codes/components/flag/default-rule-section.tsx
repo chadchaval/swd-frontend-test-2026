@@ -1,5 +1,5 @@
-import { FieldError } from './field-error'
-import type { FeatureFlagForm } from '../hooks/use-feature-flag-form'
+import { FieldError } from '../common/field-error'
+import type { FeatureFlagForm } from '../../hooks/use-feature-flag-form'
 
 export function DefaultRuleSection({ form }: { form: FeatureFlagForm }) {
   return (

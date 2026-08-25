@@ -1,11 +1,11 @@
 import Header from '#/components/features/header'
-import { DefaultRuleSection } from './components/default-rule-section'
-import { FlagMetadataSection } from './components/flag-metadata-section'
-import { JsonPreview } from './components/json-preview'
-import { TargetingSection } from './components/targeting-section'
-import { VariationsSection } from './components/variations-section'
+import { DefaultRuleSection } from './components/flag/default-rule-section'
+import { FlagMetadataSection } from './components/flag/flag-metadata-section'
+import { JsonPreview } from './components/preview/json-preview'
+import { TargetingSection } from './components/targeting/targeting-section'
+import { VariationsSection } from './components/flag/variations-section'
 import { useFeatureFlagForm } from './hooks/use-feature-flag-form'
-import { toJsonOutput } from './lib/to-json-output'
+import { toJsonOutput } from './lib/output/to-json-output'
 
 function YourCode() {
   const form = useFeatureFlagForm()

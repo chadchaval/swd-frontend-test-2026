@@ -11,7 +11,7 @@ export function JsonPreview({ value }: { value: string }) {
   useEffect(() => {
     let isActive = true
 
-    void import('../lib/setup-monaco').then(() => {
+    void import('../../lib/monaco/setup-monaco').then(() => {
       if (isActive) setIsReady(true)
     })
 

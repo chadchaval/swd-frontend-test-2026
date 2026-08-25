@@ -1,7 +1,7 @@
 import { Input } from '#/components/ui/input'
 import { Switch } from '#/components/ui/switch'
-import { FieldError } from './field-error'
-import type { FeatureFlagForm } from '../hooks/use-feature-flag-form'
+import { FieldError } from '../common/field-error'
+import type { FeatureFlagForm } from '../../hooks/use-feature-flag-form'
 
 export function FlagMetadataSection({ form }: { form: FeatureFlagForm }) {
   return (

@@ -123,8 +123,31 @@ GO Feature Flag ของจริงใช้คำย่อทั้งหม�
 
 ## 8. การแยกไฟล์
 
-`schema/` และ `lib/` เป็น logic ล้วน ไม่มี JSX เลย จึงเขียน unit test ได้โดยไม่ต้อง render อะไร
-ส่วน `components/` เป็น UI ล้วน ไม่ถือ business logic
+แบ่งสองแกน แกนแรกคือ UI กับ logic แกนที่สองคือเรื่องที่ไฟล์นั้นรับผิดชอบ
+
+```
+components/          UI ล้วน ไม่มี business logic
+  targeting/         targeting-section, rule-group, condition-row
+  flag/              flag-metadata-section, variations-section, default-rule-section
+  preview/           json-preview
+  common/            field-error
+
+lib/                 logic ล้วน ไม่มี JSX
+  targeting/         build-query, operators, rule-tree (+ test)
+  output/            to-json-output (+ test)
+  form/              create-id, form-errors
+  monaco/            setup-monaco
+
+schema/              zod schema และ type ทั้งหมด
+hooks/               useForm ที่ผูก schema เข้ากับฟอร์ม
+```
+
+`lib/` กับ `schema/` ไม่มี JSX เลย จึงเขียน unit test ได้โดยไม่ต้อง render อะไร
+และ test วางไว้ข้างไฟล์ที่มันทดสอบ ไม่ต้องเดาว่าไฟล์ไหนมี test แล้วบ้าง
+
+โฟลเดอร์ `targeting` โผล่ทั้งสองฝั่ง เพราะเป็นเรื่องที่ซับซ้อนที่สุดและมีทั้ง UI และ logic
+ถ้าจะเพิ่ม operator ใหม่หรือเปลี่ยนรูปแบบ query จะรู้ทันทีว่าต้องเข้าไปที่ `lib/targeting/`
+ส่วนถ้าจะเพิ่มฟีเจอร์ใหม่ทั้งก้อน ก็เพิ่มโฟลเดอร์ชื่อเดียวกันในทั้งสองฝั่งได้เลย
 
 `buildQuery` และ `toJsonOutput` มี test ครอบคลุมเคสที่พลาดง่าย เช่น group ซ้อนหลายชั้น group ที่มีลูกตัวเดียว
 และเงื่อนไขที่ผู้ใช้ยังกรอกไม่ครบ รันด้วย `pnpm test`

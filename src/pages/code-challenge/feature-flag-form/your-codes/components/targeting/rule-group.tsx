@@ -1,16 +1,16 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { ConditionRow } from './condition-row'
-import { FieldError } from './field-error'
-import { issuesAt } from '../lib/form-errors'
+import { FieldError } from '../common/field-error'
+import { issuesAt } from '../../lib/form/form-errors'
 import {
   appendChild,
   createCondition,
   createGroup,
   removeChildAt,
   replaceChildAt,
-} from '../lib/rule-tree'
-import type { AnyGroup } from '../schema/feature-flag.schema'
+} from '../../lib/targeting/rule-tree'
+import type { AnyGroup } from '../../schema/feature-flag.schema'
 
 // ✅ type ของ form data รองรับ children ซ้อนได้ 3 ชั้น ปิดปุ่มตรงนี้ให้ตรงกัน ผู้ใช้จะได้เห็นขอบเขตตั้งแต่ตอนกด
 const MAX_GROUP_DEPTH = 2

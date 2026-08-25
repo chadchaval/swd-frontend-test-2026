@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { toJsonOutput } from './to-json-output'
-import type { FeatureFlagFormValues } from '../schema/feature-flag.schema'
+import type { FeatureFlagFormValues } from '../../schema/feature-flag.schema'
 
 function values(
   overrides: Partial<FeatureFlagFormValues> = {},
