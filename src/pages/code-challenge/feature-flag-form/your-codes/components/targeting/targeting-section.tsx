@@ -23,6 +23,7 @@ export function TargetingSection({ form }: { form: FeatureFlagForm }) {
           <div className="space-y-4">
             {targetingField.state.value.map((rule, index) => (
               <div
+                // ห้ามใช้ index  ถ้าใช้แล้วลบ rule ตัวกลางออก ค่าที่พิมพ์ไว้จะสลับกัน เพราะ React จำสลับตัว
                 key={rule.id}
                 className="border-border space-y-3 rounded-lg border p-3"
               >
@@ -52,9 +53,8 @@ export function TargetingSection({ form }: { form: FeatureFlagForm }) {
                   </Button>
                 </div>
 
-                {/* ✅ ผูกทั้งต้นไม้เป็น field เดียว แล้วให้ component ลูกส่งต้นไม้ชุดใหม่กลับมา
-                    ถ้าแยกเป็น field ต่อ node ต้องประกอบ path เป็น string ซึ่ง TanStack Form ตรวจ type ให้ไม่ได้กับ type ที่วนซ้ำ
-                    ส่วน path ที่ส่งลงไปใช้เปิดหา error อย่างเดียว ไม่ได้ใช้ผูกค่า */}
+                {/* ตัวแม่ผูกลูกทั้งหมด เป็น field เดียว*/}
+                {/* ใช้ Subscribe ดึง error ของลูกๆมาแสดงตาม path */}
                 <form.Subscribe selector={(state) => state.errorMap}>
                   {(errorMap) => (
                     <form.Field name={`targeting[${index}].root`}>
@@ -118,6 +118,7 @@ export function TargetingSection({ form }: { form: FeatureFlagForm }) {
                               }
                             >
                               <option value="">-- เลือก variation --</option>
+
                               {variations
                                 .filter((variation) => variation.name.trim())
                                 .map((variation) => (
@@ -138,6 +139,7 @@ export function TargetingSection({ form }: { form: FeatureFlagForm }) {
                 </div>
 
                 <div className="bg-muted rounded-md px-3 py-2 font-mono text-xs break-all">
+                  {/* buildQuery คืนค่าว่างเมื่อยังไม่มีเงื่อนไขที่ครบสักข้อ */}
                   {buildQuery(rule.root) || (
                     <span className="text-muted-foreground font-sans">
                       ยังกรอกเงื่อนไขไม่ครบ ข้อที่ไม่ครบจะไม่ถูกใส่ใน query

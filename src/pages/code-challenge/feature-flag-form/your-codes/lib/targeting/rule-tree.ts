@@ -17,7 +17,7 @@ export function createCondition(): Condition {
   }
 }
 
-// ❓ กลุ่มใหม่ต้องมีลูกอย่างน้อยหนึ่งตัวเสมอ ไม่งั้น schema จะฟ้องตั้งแต่กดเพิ่ม
+// กลุ่มใหม่ต้องมีลูกอย่างน้อยหนึ่งตัวเสมอ ไม่งั้น schema จะฟ้องตั้งแต่กดเพิ่ม
 export function createGroup(): AnyGroup {
   return {
     id: createId(),
@@ -37,7 +37,7 @@ export function createTargetingRule(): TargetingRule {
   }
 }
 
-// ✅ ทุกตัวคืน object ใหม่ ไม่แก้ของเดิม React จึงรู้ว่าอะไรเปลี่ยนและ type ตรวจได้ครบ
+// ทุกตัวคืน object ใหม่ ไม่แก้ของเดิม React จึงรู้ว่าอะไรเปลี่ยนและ type ตรวจได้ครบ
 export function replaceChildAt(
   group: AnyGroup,
   index: number,

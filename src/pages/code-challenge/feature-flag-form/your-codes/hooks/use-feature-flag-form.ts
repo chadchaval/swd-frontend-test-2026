@@ -15,6 +15,9 @@ export const defaultValues: FeatureFlagFormValues = {
   defaultVariation: 'off',
 }
 
+// ส่ง schema ทั้งก้อนไม่ได้ เพราะ targeting เป็น type วนซ้ำ ตัว schema จึงอ้างถึงตัวเอง
+// devtools ของ form จะ JSON.stringify options ทั้งก้อน แล้วเดินวนไม่จบจน dev server ตาย
+// TanStack Form เรียกใช้แค่ ~standard.validate() ส่งไปเฉพาะส่วนนั้น validation จึงเหมือนเดิมทุกอย่าง
 const featureFlagValidator = { '~standard': featureFlagSchema['~standard'] }
 
 export function useFeatureFlagForm() {

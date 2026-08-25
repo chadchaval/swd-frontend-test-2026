@@ -54,7 +54,7 @@ export function FlagMetadataSection({ form }: { form: FeatureFlagForm }) {
               checked={field.state.value}
               onCheckedChange={field.handleChange}
             />
-            {/* ❓ ป้ายอยู่หลัง switch และไม่สลับข้อความ ตาแค่กวาดหาสถานะที่ตัว switch พอ */}
+
             <label htmlFor={field.name} className="cursor-pointer text-sm">
               Enabled
             </label>

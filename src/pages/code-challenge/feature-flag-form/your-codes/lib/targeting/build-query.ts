@@ -1,7 +1,6 @@
 import { operatorNeedsValue } from './operators'
 import type { AnyRuleNode } from '../../schema/feature-flag.schema'
 
-// ✅ ของจริงใช้ double quote แต่ expected.json ใช้ single quote จึงยึด single quote ให้ทั้งเส้นเหมือนกันหมด
 // เดาชนิดจากค่าที่ user พิมพ์ เลขกับ boolean ไม่ต้องมี quote ส่วนข้อความต้องมี
 function formatScalar(raw: string): string {
   const trimmed = raw.trim()
@@ -42,7 +41,7 @@ export function buildQuery(node: AnyRuleNode, isRoot = true): string {
 
   const parts = node.children
     .map((child) => buildQuery(child, false))
-    .filter((part) => part !== '') // ✅ ตัดเงื่อนไขที่ยังกรอกไม่ครบออก ไม่งั้น query จะมี and ลอยๆ
+    .filter((part) => part !== '') // ตัดเงื่อนไขที่ยังกรอกไม่ครบออก ไม่งั้น query จะมี and ลอยๆ
 
   if (parts.length === 0) return ''
   if (parts.length === 1) return parts[0] // ลูกตัวเดียวไม่ต้องมีวงเล็บ

@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { ConditionRow } from './condition-row'
 import { FieldError } from '../common/field-error'
@@ -12,8 +12,8 @@ import {
 } from '../../lib/targeting/rule-tree'
 import type { AnyGroup } from '../../schema/feature-flag.schema'
 
-// ✅ type ของ form data รองรับ children ซ้อนได้ 3 ชั้น ปิดปุ่มตรงนี้ให้ตรงกัน ผู้ใช้จะได้เห็นขอบเขตตั้งแต่ตอนกด
-const MAX_GROUP_DEPTH = 2
+// type ของ form data รองรับ children ซ้อนได้ 3 ชั้น ปิดปุ่มตรงนี้ให้ตรงกัน ผู้ใช้จะได้เห็นขอบเขตตั้งแต่ตอนกด
+const MAX_GROUP_DEPTH = 5
 
 export function RuleGroup({
   group,
@@ -33,7 +33,7 @@ export function RuleGroup({
   const canNestGroup = depth < MAX_GROUP_DEPTH
 
   return (
-    <div className="border-border space-y-2 rounded-lg border p-3">
+    <div className="border-border space-y-2 rounded-lg border p-3 border-t-2 border-t-amber-400">
       <div className="flex items-center gap-2">
         <select
           aria-label="ตัวเชื่อมของกลุ่ม"
@@ -58,19 +58,19 @@ export function RuleGroup({
         {onRemove && (
           <Button
             type="button"
-            variant="ghost"
+            variant="destructive"
             size="icon"
             className="ml-auto"
             aria-label="ลบกลุ่ม"
             onClick={onRemove}
           >
-            <Trash2 className="size-4" />
+            <X className="size-4" />
           </Button>
         )}
       </div>
 
       {group.children.map((child, index) =>
-        // ✅ ตรงนี้คือจุดที่ recursive จริง กลุ่มเรียกตัวเองซ้ำเพื่อวาดกลุ่มที่ซ้อนอยู่ข้างใน
+        // ตรงนี้คือจุดที่ recursive จริง กลุ่มเรียกตัวเองซ้ำเพื่อวาดกลุ่มที่ซ้อนอยู่ข้างใน
         child.type === 'group' ? (
           <RuleGroup
             key={child.id}
@@ -110,7 +110,7 @@ export function RuleGroup({
           variant="outline"
           size="sm"
           disabled={!canNestGroup}
-          title={canNestGroup ? undefined : 'ซ้อนกลุ่มได้ลึกสุด 3 ชั้น'}
+          title={canNestGroup ? undefined : 'ซ้อนกลุ่มได้ลึกสุด 6 ชั้น'}
           onClick={() => onChange(appendChild(group, createGroup()))}
         >
           <Plus className="size-4" /> Group

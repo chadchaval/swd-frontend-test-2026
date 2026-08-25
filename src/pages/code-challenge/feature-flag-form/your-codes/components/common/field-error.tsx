@@ -8,8 +8,7 @@ function toMessage(issue: Issue): string {
 }
 
 export function FieldError({ errors }: { errors: Array<Issue> }) {
-  // ✅ zod ยิง error ทุกข้อของ field พร้อมกัน เอามาต่อกันจะอ่านยาก จึงโชว์ทีละข้อ
-  // ลำดับที่เห็นคือลำดับที่เขียน check ไว้ใน schema เช่น min(1) มาก่อน regex ช่องว่างจึงขึ้นว่า required ก่อนเสมอ
+  // zod ยิง error ทุกข้อของ field พร้อมกัน เอามาต่อกันจะอ่านยาก จึงโชว์ทีละข้อ
   const message = errors.map(toMessage).find(Boolean)
 
   if (!message) return null

@@ -55,7 +55,7 @@ export function ConditionRow({
           ))}
         </select>
 
-        {/* ✅ operator อย่าง pr ไม่ต้องมีค่า ซ่อนช่องไปเลยดีกว่าปล่อยให้กรอกแล้วค่านั้นถูกทิ้งเงียบ ๆ */}
+        {/* operator อย่าง pr ไม่ต้องมีค่า ซ่อนช่องไปเลยดีกว่าปล่อยให้กรอกแล้วค่านั้นถูกทิ้งเงียบ ๆ */}
         {needsValue && (
           <Input
             className="h-9 min-w-28 flex-1"

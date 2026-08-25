@@ -37,7 +37,7 @@ export function toJsonOutput(values: FeatureFlagFormValues) {
 
   const description = values.description.trim()
 
-  // ✅ ใส่ disable/metadata ด้วย spread ไม่ใช่กำหนดทีหลัง เพราะ JS เรียง key ตามลำดับที่ใส่
+  // ใส่ disable/metadata ด้วย spread ไม่ใช่กำหนดทีหลัง เพราะ JS เรียง key ตามลำดับที่ใส่
   // ถ้ากำหนดทีหลัง disable จะไปโผล่ท้ายสุด ไม่ตรงตำแหน่งกับ GOFF ของจริง
   const flag: Record<string, unknown> = {
     variations: toVariationsObject(values.variations),

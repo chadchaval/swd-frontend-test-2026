@@ -14,7 +14,7 @@ export function VariationsSection({ form }: { form: FeatureFlagForm }) {
         {(variationsField) => (
           <div className="space-y-3">
             {variationsField.state.value.map((variation, index) => (
-              // ✅ key ต้องเป็น id ที่คงที่ ถ้าใช้ index แล้วลบตัวกลาง ค่าที่พิมพ์ไว้จะสลับกัน
+              // key ต้องเป็น id ที่คงที่ ถ้าใช้ index แล้วลบตัวกลาง ค่าที่พิมพ์ไว้จะสลับกัน
               <div key={variation.id} className="flex items-start gap-2">
                 <form.Field name={`variations[${index}].name`}>
                   {(field) => (

@@ -18,8 +18,12 @@ type GroupOf<TChild> = {
   children: Array<TChild>
 }
 
-// ✅ TanStack Form เดิน DeepKeys ทุก field ถ้า type วนซ้ำไม่จำกัด จะ infer ทั้งฟอร์มไม่ได้เลย จึงจำกัดความลึกไว้ 4 ชั้นเฉพาะฝั่ง type
-type NodeDepth4 = Condition
+// ✅ TanStack Form เดิน DeepKeys ทุก field ถ้า type วนซ้ำไม่จำกัด จะได้ TS2589 และทั้งฟอร์มกลายเป็น any
+// ขอแค่มีจุดจบ จะลึกเท่าไหร่ก็ได้ ทดสอบถึง 14 ชั้นก็ยังผ่าน จำนวนชั้นตรงนี้ตั้งให้ตรงกับ MAX_GROUP_DEPTH ใน rule-group
+type NodeDepth7 = Condition
+type NodeDepth6 = Condition | GroupOf<NodeDepth7>
+type NodeDepth5 = Condition | GroupOf<NodeDepth6>
+type NodeDepth4 = Condition | GroupOf<NodeDepth5>
 type NodeDepth3 = Condition | GroupOf<NodeDepth4>
 type NodeDepth2 = Condition | GroupOf<NodeDepth3>
 
@@ -40,13 +44,13 @@ const groupObjectSchema = z.object({
   id: z.string(),
   type: z.literal('group'),
   operator: z.enum(['and', 'or']),
-  // ✅ ใช้ getter เพราะ ruleNodeSchema ยังไม่เกิดตอนบรรทัดนี้ถูกอ่าน getter จะประเมินตอนเรียกใช้
+  // ใช้ getter เพราะ ruleNodeSchema ยังไม่เกิดตอนบรรทัดนี้ถูกอ่าน getter จะประเมินตอนเรียกใช้
   get children() {
     return z.array(ruleNodeSchema).min(1, 'A group needs at least one item')
   },
 })
 
-// ✅ cast เพราะตอน runtime schema ตรวจได้ลึกไม่จำกัด แต่ TS type ถูกจำกัดไว้ 4 ชั้นตามข้อจำกัดด้านบน
+// cast เพราะตอน runtime schema ตรวจได้ลึกไม่จำกัด แต่ TS type ถูกจำกัดไว้ 4 ชั้นตามข้อจำกัดด้านบน
 export const groupSchema = groupObjectSchema as unknown as z.ZodType<
   Group,
   Group
