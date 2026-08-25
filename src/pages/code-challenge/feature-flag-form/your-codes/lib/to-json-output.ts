@@ -35,8 +35,13 @@ function toVariationsObject(
 export function toJsonOutput(values: FeatureFlagFormValues) {
   const flagName = values.name.trim() || 'untitled-flag'
 
+  const description = values.description.trim()
+
+  // ✅ ใส่ disable/metadata ด้วย spread ไม่ใช่กำหนดทีหลัง เพราะ JS เรียง key ตามลำดับที่ใส่
+  // ถ้ากำหนดทีหลัง disable จะไปโผล่ท้ายสุด ไม่ตรงตำแหน่งกับ GOFF ของจริง
   const flag: Record<string, unknown> = {
     variations: toVariationsObject(values.variations),
+    ...(values.enabled ? {} : { disable: true }),
     targeting: values.targeting.map((rule) => ({
       query: buildQuery(rule.root),
       percentage: rule.percentage,
@@ -45,15 +50,7 @@ export function toJsonOutput(values: FeatureFlagFormValues) {
     defaultRule: {
       variation: values.defaultVariation,
     },
-  }
-
-  // ใส่ 2 key นี้เฉพาะตอนมีค่าจริง เพื่อให้ output ปกติตรงกับ expected.json เป๊ะ
-  if (!values.enabled) {
-    flag.disable = true
-  }
-
-  if (values.description.trim()) {
-    flag.metadata = { description: values.description.trim() }
+    ...(description ? { metadata: { description } } : {}),
   }
 
   return {

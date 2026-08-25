@@ -1,4 +1,5 @@
 import { Input } from '#/components/ui/input'
+import { Switch } from '#/components/ui/switch'
 import { FieldError } from './field-error'
 import type { FeatureFlagForm } from '../hooks/use-feature-flag-form'
 
@@ -47,15 +48,17 @@ export function FlagMetadataSection({ form }: { form: FeatureFlagForm }) {
 
       <form.Field name="enabled">
         {(field) => (
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="size-4 accent-emerald-500"
+          <div className="flex items-center gap-2">
+            <Switch
+              id={field.name}
               checked={field.state.value}
-              onChange={(event) => field.handleChange(event.target.checked)}
+              onCheckedChange={field.handleChange}
             />
-            {field.state.value ? 'Enabled' : 'Disabled'}
-          </label>
+            {/* ❓ ป้ายอยู่หลัง switch และไม่สลับข้อความ ตาแค่กวาดหาสถานะที่ตัว switch พอ */}
+            <label htmlFor={field.name} className="cursor-pointer text-sm">
+              Enabled
+            </label>
+          </div>
         )}
       </form.Field>
     </section>
