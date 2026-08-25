@@ -1,6 +1,7 @@
 import { operatorNeedsValue } from './operators'
 import type { AnyRuleNode } from '../schema/feature-flag.schema'
 
+// ✅ ของจริงใช้ double quote แต่ expected.json ใช้ single quote จึงยึด single quote ให้ทั้งเส้นเหมือนกันหมด
 // เดาชนิดจากค่าที่ user พิมพ์ เลขกับ boolean ไม่ต้องมี quote ส่วนข้อความต้องมี
 function formatScalar(raw: string): string {
   const trimmed = raw.trim()
@@ -19,7 +20,7 @@ function formatValue(operator: string, raw: string): string {
       .filter(Boolean)
       .map(formatScalar)
 
-    return `(${items.join(', ')})`
+    return `[${items.join(', ')}]`
   }
 
   return formatScalar(raw)

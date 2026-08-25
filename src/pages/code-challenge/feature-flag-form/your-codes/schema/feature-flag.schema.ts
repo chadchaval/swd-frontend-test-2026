@@ -47,7 +47,10 @@ const groupObjectSchema = z.object({
 })
 
 // ✅ cast เพราะตอน runtime schema ตรวจได้ลึกไม่จำกัด แต่ TS type ถูกจำกัดไว้ 4 ชั้นตามข้อจำกัดด้านบน
-export const groupSchema = groupObjectSchema as unknown as z.ZodType<Group, Group>
+export const groupSchema = groupObjectSchema as unknown as z.ZodType<
+  Group,
+  Group
+>
 
 export const ruleNodeSchema = z.union([
   conditionSchema,

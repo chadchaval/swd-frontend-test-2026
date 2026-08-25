@@ -9,9 +9,9 @@ export const OPERATORS = [
   { label: 'Contains', value: 'co', needsValue: true }, // 6 ตัวล่างไม่มีสัญลักษณ์ จึงใช้คำย่อตาม GOFF
   { label: 'Starts With', value: 'sw', needsValue: true },
   { label: 'Ends With', value: 'ew', needsValue: true },
-  { label: 'In a List', value: 'in', needsValue: true },
-  { label: 'Present', value: 'pr', needsValue: false }, // needsValue false ใช้ซ่อนช่อง value ใน UI
-  { label: 'Not', value: 'not', needsValue: false },
+  { label: 'In a List', value: 'in', needsValue: true }, // ❓ ค่าคั่นด้วยจุลภาค แล้วไปประกอบเป็น [..] ใน build-query
+  { label: 'Present', value: 'pr', needsValue: false }, // ✅ pr เป็นตัวเดียวที่ไม่ต้องมีค่า needsValue false ใช้ซ่อนช่อง value ใน UI
+  { label: 'Not', value: 'not', needsValue: true },
 ] as const
 
 export type OperatorValue = (typeof OPERATORS)[number]['value']
