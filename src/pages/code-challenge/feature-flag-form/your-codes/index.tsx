@@ -1,6 +1,7 @@
 import Header from '#/components/features/header'
 import { DefaultRuleSection } from './components/default-rule-section'
 import { FlagMetadataSection } from './components/flag-metadata-section'
+import { JsonPreview } from './components/json-preview'
 import { VariationsSection } from './components/variations-section'
 import { useFeatureFlagForm } from './hooks/use-feature-flag-form'
 import { toJsonOutput } from './lib/to-json-output'
@@ -28,15 +29,14 @@ function YourCode() {
           <DefaultRuleSection form={form} />
         </form>
 
-        {/* ตอนนี้ preview เป็น pre ธรรมดาไปก่อน เดี๋ยว Phase 3 ค่อยเปลี่ยนเป็น Monaco */}
         <div className="bg-card border-border h-fit rounded-xl border p-5">
           <h2 className="mb-3 text-lg font-semibold">JSON Preview</h2>
           {/* Subscribe เลือกเฉพาะ values ทำให้ส่วนนี้ re-render เมื่อค่าฟอร์มเปลี่ยนเท่านั้น */}
           <form.Subscribe selector={(state) => state.values}>
             {(values) => (
-              <pre className="overflow-x-auto rounded-lg bg-slate-950 p-4 font-mono text-xs text-blue-300">
-                {JSON.stringify(toJsonOutput(values), null, 2)}
-              </pre>
+              <JsonPreview
+                value={JSON.stringify(toJsonOutput(values), null, 2)}
+              />
             )}
           </form.Subscribe>
         </div>
