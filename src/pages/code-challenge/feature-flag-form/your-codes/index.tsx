@@ -2,6 +2,7 @@ import Header from '#/components/features/header'
 import { DefaultRuleSection } from './components/default-rule-section'
 import { FlagMetadataSection } from './components/flag-metadata-section'
 import { JsonPreview } from './components/json-preview'
+import { TargetingSection } from './components/targeting-section'
 import { VariationsSection } from './components/variations-section'
 import { useFeatureFlagForm } from './hooks/use-feature-flag-form'
 import { toJsonOutput } from './lib/to-json-output'
@@ -26,6 +27,7 @@ function YourCode() {
         >
           <FlagMetadataSection form={form} />
           <VariationsSection form={form} />
+          <TargetingSection form={form} />
           <DefaultRuleSection form={form} />
         </form>
 
